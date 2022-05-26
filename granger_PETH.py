@@ -82,11 +82,13 @@ def get_average_PETH_per_region_per_condition(mapping='Swanson'):
             
         DD[split] = D
         
-    return DD
+    np.save('/mnt/8cfe1683-d974-40f3-a20b-b217cad4722a/'
+           f'granger/PETH/avPETH_{mapping}.npy', DD, allow_pickle=True)       
+
     
     
     
-def save_data_for_matlab():
+def save_data_for_matlab(mapping='Swanson'):
 
     '''
     For each region average PETHs across cells; 
@@ -98,7 +100,7 @@ def save_data_for_matlab():
     '''
 
     DD = np.load('/mnt/8cfe1683-d974-40f3-a20b-b217cad4722a/'
-                'granger/PETH/avPETH.npy',allow_pickle=True).flat[0]
+                f'granger/PETH/avPETH_{mapping}.npy',allow_pickle=True).flat[0]
                        
     regs_ = Counter(np.concatenate([list(DD[x].keys()) for x in DD]))
     regs = [x for x in regs_ if regs_[x] == 5]
@@ -173,7 +175,7 @@ def run_GC_matlab():
 
 
 
-def get_max_GC_for_all_region_pairs():
+def get_max_GC_for_all_region_pairs(mapping='Cosmos'):
 
     D = {}
 
@@ -188,6 +190,8 @@ def get_max_GC_for_all_region_pairs():
         
         D[regs[p[0]]+'_'+regs[p[1]]] = [max(grc[:,0,1]), max(grc[:,1,0])]
     
+    np.save('/mnt/8cfe1683-d974-40f3-a20b-b217cad4722a/'
+           f'granger/PETH/max_{mapping}.npy', D, allow_pickle=True) 
 
 
 '''
@@ -197,7 +201,7 @@ plotting
 '''
 
 
-def plot_res(combi):
+def plot_res(combi, mapping='Cosmos'):
 
     '''
     # compare GC, coherence and PSD across engaged/disengaged trials
@@ -230,7 +234,8 @@ def plot_res(combi):
 
     # also plot time series
     DD = np.load('/mnt/8cfe1683-d974-40f3-a20b-b217cad4722a/'
-                'granger/PETH/avPETH.npy',allow_pickle=True).flat[0]
+                f'granger/PETH/avPETH_{mapping}.npy',
+                allow_pickle=True).flat[0]
                        
     regs_ = Counter(np.concatenate([list(DD[x].keys()) for x in DD]))
     regs = [x for x in regs_ if regs_[x] == 5]
@@ -293,6 +298,41 @@ def plot_res(combi):
     plt.savefig(b+'/figs/'+
                 f'/{str(combi)}_{regs[combi[0]]}_{regs[combi[1]]}.png')
     plt.close()
+
+
+def plot_connectivity_matrix(mapping='Cosmos'):
+
+
+    D = np.load('/mnt/8cfe1683-d974-40f3-a20b-b217cad4722a/'
+           f'granger/PETH/max_{mapping}.npy', allow_pickle=True).flat[0] 
+
+    # create connectivity matrix from dict
+    regs = list(Counter(np.concatenate([[x for x in s.split('_')]
+                                        for s in D.keys()])))
+    A = np.zeros((len(regs), len(regs)))
+    
+    for i in range(len(regs)):
+        for j in range(len(regs)): 
+            if i == j:
+                continue
+            
+            try:
+                a,b = D[regs[i]+'_'+regs[j]]    
+                A[i,j] = a
+            except:
+                a,b = D[regs[j]+'_'+regs[i]]
+                A[i,j] = b                 
+
+
+    fig, ax = plt.subplots()
+    pos = ax.imshow(A, interpolation=None)
+    ax.set_title('i,j-th entry is reg i Granger-causing region j')
+    ax.set_xticks(range(len(regs)))
+    ax.set_xticklabels(regs, rotation=90)
+    ax.set_yticks(range(len(regs)))
+    ax.set_yticklabels(regs)
+    fig.colorbar(pos, ax=ax)
+    fig.tight_layout()
 
 
 
