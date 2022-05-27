@@ -37,7 +37,8 @@ align = {'block':'stim on',
 def get_average_PETH_per_region_per_condition(mapping='Swanson'):
 
     DD = {}
-      
+    # this uses results computed via the manifold analysis script 
+    # https://github.com/int-brain-lab/paper-brain-wide-map/blob/main/manifold_analysis/state_space_bwm.py#L271    
     
     for split in align:
     
